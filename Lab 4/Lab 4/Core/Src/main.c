@@ -56,47 +56,132 @@ void SystemClock_Config(void);
 
 /* USER CODE END 0 */
 
+void USART_TransmitChar(char c) {
+    // Implementation of character transmit function can be added here
+    // For demonstration purposes, we'll simply print the character
+	while(1){
+		if((USART3->ISR & (1<<7)) == (1<<7)){
+			break;
+		}
+	}
+    USART3->TDR = c;
+}
+
+void USART_TransmitString(const char* str){
+			int i = 0; // Counter for indexing the array
+	    while (str[i] != '\0') { // Loop until null character is encountered
+        USART_TransmitChar(str[i]); // Transmit the current character
+        i++; // Move to the next character in the array
+    }
+}
+
+void setLED(void){
+	    switch(USART3->RDR) {
+        case 'g':
+					//green LED
+            GPIOC->ODR ^=(1<<9);
+            break;
+        case 'b':
+            GPIOC->ODR ^=(1<<7);
+            break;
+        case 'r':
+            GPIOC->ODR ^=(1<<6);
+            break;
+				 case 'o':
+            GPIOC->ODR ^=(1<<8);
+            break;
+        default:
+					USART_TransmitString("Invalid choice\n");
+    }
+}
+
 /**
   * @brief  The application entry point.
   * @retval int
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
+	
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+	
+		//configure leds
+	
+GPIOC->MODER &=~(1<<19); 
+GPIOC->MODER |=(1<<18);
+GPIOC->MODER &=~(1<<17); 
+GPIOC->MODER |=(1<<16);
+GPIOC->MODER &=~(1<<15); 
+GPIOC->MODER |=(1<<14); 
+GPIOC->MODER &=~(1<<13); 
+GPIOC->MODER |=(1<<12); 
+	
+GPIOC->OTYPER &=~(1<<6);
+GPIOC->OTYPER &=~(1<<7);
+GPIOC->OTYPER &=~(1<<8);
+GPIOC->OTYPER &=~(1<<9);
+	
+GPIOC->OSPEEDR &=~(1<<18); 
+GPIOC->OSPEEDR &=~(1<<16);
+GPIOC->OSPEEDR &=~(1<<14);
+GPIOC->OSPEEDR &=~(1<<12); 
+ 
+	
+GPIOC->PUPDR &=~(1<<19); 
+GPIOC->PUPDR &=~(1<<18);
+GPIOC->PUPDR &=~(1<<17); 
+GPIOC->PUPDR &=~(1<<16);
+GPIOC->PUPDR &=~(1<<15); 
+GPIOC->PUPDR &=~(1<<14);
+GPIOC->PUPDR &=~(1<<13); 
+GPIOC->PUPDR &=~(1<<12); 
 
-  /* USER CODE BEGIN SysInit */
+GPIOC->ODR |=(1<<9);
+GPIOC->ODR |=(1<<8);
+GPIOC->ODR |=(1<<7);
+GPIOC->ODR |=(1<<6);
+	
+	//set alternate function mode
+	GPIOB->MODER  |=(1<<21);
+	GPIOB->MODER  |=(1<<23);
+	GPIOB->MODER &=~(1<<20);
+	GPIOB->MODER &=~(1<<22);
+	
+	//set AFR
+	GPIOB->AFR[1] |=(1<<10);
+	GPIOB->AFR[1] |=(1<<14);
+	
+	//set Baud Rate
+	USART3->BRR =  HAL_RCC_GetHCLKFreq()/9600;
+	
+	//enable transmit and enable and enable usart
+	
+	USART3->CR1 |=(1<<2);
+	USART3->CR1 |=(1<<3);
+	USART3->CR1 |=(1<<0);
+	
 
-  /* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
+	
 
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	while(1){
+		if((USART3->ISR & (1<<5)) == (1<<5)){
+			break;
+		}
+	}
+
+	setLED();
   }
-  /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration
