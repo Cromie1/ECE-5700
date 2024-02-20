@@ -19,43 +19,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+
+// Declaration of global variables
+char global_char;
+volatile char *read_ready;
+
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 
-/* USER CODE END 0 */
-
+/**
+* @brief send char to device
+* @param c char to send
+**/
 void USART_TransmitChar(char c) {
     // Implementation of character transmit function can be added here
     // For demonstration purposes, we'll simply print the character
@@ -67,6 +44,10 @@ void USART_TransmitChar(char c) {
     USART3->TDR = c;
 }
 
+/**
+* @brief send string to device
+* @param str string to send
+**/
 void USART_TransmitString(const char* str){
 			int i = 0; // Counter for indexing the array
 	    while (str[i] != '\0') { // Loop until null character is encountered
@@ -75,24 +56,12 @@ void USART_TransmitString(const char* str){
     }
 }
 
-void setLED(void){
-	    switch(USART3->RDR) {
-        case 'g':
-					//green LED
-            GPIOC->ODR ^=(1<<9);
-            break;
-        case 'b':
-            GPIOC->ODR ^=(1<<7);
-            break;
-        case 'r':
-            GPIOC->ODR ^=(1<<6);
-            break;
-				 case 'o':
-            GPIOC->ODR ^=(1<<8);
-            break;
-        default:
-					USART_TransmitString("Invalid choice\n");
-    }
+/**
+	*handler for interrupt
+**/
+void USART3_4_IRQHandler(void){
+	global_char = USART3->RDR;
+	*read_ready = 't';
 }
 
 /**
@@ -101,6 +70,8 @@ void setLED(void){
   */
 int main(void)
 {
+	char test = 'f';
+	read_ready = &test;
   HAL_Init();
 
 
@@ -159,26 +130,91 @@ GPIOC->ODR |=(1<<6);
 	//set Baud Rate
 	USART3->BRR =  HAL_RCC_GetHCLKFreq()/9600;
 	
-	//enable transmit and enable and enable usart
-	
+	//enable transmit and enable and enable usart and interrupt
+	USART3->CR1 |=(1<<5);
 	USART3->CR1 |=(1<<2);
 	USART3->CR1 |=(1<<3);
 	USART3->CR1 |=(1<<0);
 	
+	//enable global interrupt
+	NVIC_EnableIRQ(USART3_4_IRQn);
+NVIC_SetPriority(USART3_4_IRQn,2);
 
-
-	
 
   while (1)
   {
-
-	while(1){
-		if((USART3->ISR & (1<<5)) == (1<<5)){
-			break;
-		}
+		USART_TransmitString("Choose LED\n\r");
+		
+//check for button input
+	while(*read_ready != 't'){
 	}
+	
+			//select LED
+	int led;
+		    switch(global_char) {
+        case 'g':
+					//green LED
+            led = 9;
+				USART_TransmitString("Green Selected:\n\r");
+				*read_ready = 'f';
+            break;
+				
+        case 'b':
+					//blue LED
+            led = 7;
+				USART_TransmitString("Blue Selected:\n\r");
+				*read_ready = 'f';
+            break;
 
-	setLED();
+        case 'r':
+					//red LED
+            led = 6;
+				USART_TransmitString("Red Selected:\n\r");
+				*read_ready = 'f';
+            break;
+				
+				 case 'o':
+					 //orange LED
+            led = 8;
+				 USART_TransmitString("Orange Selected:\n\r");
+				 *read_ready = 'f';
+            break;
+        default:
+				USART_TransmitString("Invalid choice\n\r");
+				*read_ready = 'f';
+					continue;
+    }
+				//second loop
+	while(*read_ready != 't'){	
+	}
+			    switch(global_char) {
+						
+        case '0':
+					//led OFF
+				GPIOC->ODR &=~(1<<led);
+				USART_TransmitString("LED OFF:\n\r");
+				*read_ready = 'f';
+            break;
+				
+        case '1':
+        	//led ON
+				GPIOC->ODR |=(1<<led);
+				USART_TransmitString("LED ON:\n\r");
+				*read_ready = 'f';
+            break;
+				
+        case '2':
+          //led toggle
+				GPIOC->ODR ^=(1<<led);
+				USART_TransmitString("LED TOGGLE:\n\r");
+				*read_ready = 'f';
+            break;
+				
+        default:
+				USART_TransmitString("Invalid choice\n\r");
+				*read_ready = 'f';
+					continue;
+    }
   }
 }
 
@@ -249,7 +285,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: printf("Wrong parameters value: file %s on line %d\r\n\r", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
