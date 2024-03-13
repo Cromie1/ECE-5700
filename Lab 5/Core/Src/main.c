@@ -2,7 +2,7 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main program body
+  * @brief          : Gyroscopic sensing code to control LED's
   ******************************************************************************
   * @attention
   *
@@ -19,45 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
+  * @brief  Main function to control application.
   * @retval int
   */
 int main(void)
@@ -66,164 +34,103 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
 
+	//setup RCC
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
 	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 
 	//configure LEDS
-GPIOC->MODER &=~(1<<19); 
-GPIOC->MODER |=(1<<18);
-GPIOC->MODER &=~(1<<17); 
-GPIOC->MODER |=(1<<16);
-GPIOC->MODER &=~(1<<15); 
-GPIOC->MODER |=(1<<14); 
-GPIOC->MODER &=~(1<<13); 
-GPIOC->MODER |=(1<<12); 
+	GPIOC->MODER &=~(1<<19); 
+	GPIOC->MODER |=(1<<18);
+	GPIOC->MODER &=~(1<<17); 
+	GPIOC->MODER |=(1<<16);
+	GPIOC->MODER &=~(1<<15); 
+	GPIOC->MODER |=(1<<14); 
+	GPIOC->MODER &=~(1<<13); 
+	GPIOC->MODER |=(1<<12); 
 	
-GPIOC->OTYPER &=~(1<<6);
-GPIOC->OTYPER &=~(1<<7);
-GPIOC->OTYPER &=~(1<<8);
-GPIOC->OTYPER &=~(1<<9);
+	GPIOC->OTYPER &=~(1<<6);
+	GPIOC->OTYPER &=~(1<<7);
+	GPIOC->OTYPER &=~(1<<8);
+	GPIOC->OTYPER &=~(1<<9);
 	
-GPIOC->OSPEEDR &=~(1<<18); 
-GPIOC->OSPEEDR &=~(1<<16);
-GPIOC->OSPEEDR &=~(1<<14);
-GPIOC->OSPEEDR &=~(1<<12); 
+	GPIOC->OSPEEDR &=~(1<<18); 
+	GPIOC->OSPEEDR &=~(1<<16);
+	GPIOC->OSPEEDR &=~(1<<14);
+	GPIOC->OSPEEDR &=~(1<<12); 
  
 	
-GPIOC->PUPDR &=~(1<<19); 
-GPIOC->PUPDR &=~(1<<18);
-GPIOC->PUPDR &=~(1<<17); 
-GPIOC->PUPDR &=~(1<<16);
-GPIOC->PUPDR &=~(1<<15); 
-GPIOC->PUPDR &=~(1<<14);
-GPIOC->PUPDR &=~(1<<13); 
-GPIOC->PUPDR &=~(1<<12); 
+	GPIOC->PUPDR &=~(1<<19); 
+	GPIOC->PUPDR &=~(1<<18);
+	GPIOC->PUPDR &=~(1<<17); 
+	GPIOC->PUPDR &=~(1<<16);
+	GPIOC->PUPDR &=~(1<<15); 
+	GPIOC->PUPDR &=~(1<<14);
+	GPIOC->PUPDR &=~(1<<13); 
+	GPIOC->PUPDR &=~(1<<12); 
 
-GPIOC->ODR &=~(1<<9);
-GPIOC->ODR &=~(1<<8);
-GPIOC->ODR &=~(1<<7);
-GPIOC->ODR &=~(1<<6);
-
-	// set pb11 to alternate function
-GPIOB->MODER &=~(1<<22); 
-GPIOB->MODER |=(1<<23);
-
-GPIOB->OTYPER |=(1<<11);
+	GPIOC->ODR &=~(1<<9);
+	GPIOC->ODR &=~(1<<8);
+	GPIOC->ODR &=~(1<<7);
+	GPIOC->ODR &=~(1<<6);
 	
-//set afr
-GPIOB->AFR[1] |=(1<<12);
+	//begin setup of I2C2
+	// set pb11 to alternate function
+	GPIOB->MODER &=~(1<<22); 
+	GPIOB->MODER |=(1<<23);
+
+	GPIOB->OTYPER |=(1<<11);
+	
+	//set afr
+	GPIOB->AFR[1] |=(1<<12);
 
 	// set pb13 to alternate function
-GPIOB->MODER &=~(1<<26); 
-GPIOB->MODER |=(1<<27);
+	GPIOB->MODER &=~(1<<26); 
+	GPIOB->MODER |=(1<<27);
 
-GPIOB->OTYPER |=(1<<13);
+	GPIOB->OTYPER |=(1<<13);
 	
-//set afr
-GPIOB->AFR[1] |=(1<<22);
-GPIOB->AFR[1] |=(1<<20);
+	//set afr
+	GPIOB->AFR[1] |=(1<<22);
+	GPIOB->AFR[1] |=(1<<20);
 
-//set pb14
-GPIOB->MODER |=(1<<28);
-GPIOB->OTYPER &=~(1<<14);
-//set pb14 high
-GPIOB->ODR |=(1<<14);
+	//set pb14
+	GPIOB->MODER |=(1<<28);
+	GPIOB->OTYPER &=~(1<<14);
+	//set pb14 high
+	GPIOB->ODR |=(1<<14);
 
-//set pc0
-GPIOC->MODER |=(1<<0);
-GPIOC->OTYPER &=~(1<<0);
-//set pb14 high
-GPIOC->ODR |=(1<<0);
+	//set pc0
+	GPIOC->MODER |=(1<<0);
+	GPIOC->OTYPER &=~(1<<0);
+	//set pb14 high
+	GPIOC->ODR |=(1<<0);
 
-//set to 100kHz
-I2C2->TIMINGR |= 0x13;
-I2C2->TIMINGR |= (0xF<<8);
-I2C2->TIMINGR |= (0x2<<16);
-I2C2->TIMINGR |= (0x4<<20);
-I2C2->TIMINGR |= (0x1<<28);
+	//set to 100kHz
+	I2C2->TIMINGR |= 0x13;
+	I2C2->TIMINGR |= (0xF<<8);
+	I2C2->TIMINGR |= (0x2<<16);
+	I2C2->TIMINGR |= (0x4<<20);
+	I2C2->TIMINGR |= (0x1<<28);
 
-//i2c enable
+	//i2c enable
+	I2C2->CR1 |=(1<<0);
 
-I2C2->CR1 |=(1<<0);
-
-
-//read the register
-
-//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16); 
-//RD WRN
-I2C2->CR2 &=~(1<<10); 
-//START
-I2C2->CR2 |=(1<<13); 
-
-  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_TXIS)){
+	//begin Setup of Gyrosopic sensor
 	
-			break;
-		}
-  }
-	//write Who_AM_I
-	I2C2->TXDR |= 0x0F;
-	
-	//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
-	
-	//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16); 
-//RD WRN
-I2C2->CR2 |=(1<<10); 
-//START
-I2C2->CR2 |=(1<<13);
-	//wait until RXNE
-	  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_RXNE)){
-			break;
-		}
-  }
-	
-		//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
-			I2C2->CR2 |=(1<<14);
-	if((I2C2->RXDR & 0xD3) != 0xD3 ){
-		I2C2->CR2 |=(1<<14);
-	}
-	
-	
-	//set x and y sensing axes in CTRL_REG1
-	//set normal mode
-	//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16);
-//RD WRN
-I2C2->CR2 &=~(1<<10); 
-//START
-I2C2->CR2 |=(1<<13); 
+	//Set slave Address
+	I2C2->CR2 |= (0x69<<1); 
+	//set 1 byte
+	I2C2->CR2 |= (1<<16);
+	//RD WRN
+	I2C2->CR2 &=~(1<<10); 
+	//START
+	I2C2->CR2 |=(1<<13); 
 
+	//wait for TXIS
   while (1)
   {
 		if((I2C2->ISR & (1<<1))){
