@@ -19,8 +19,43 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/**
+	*@brief waits for TXIS flag to be set.
+**/
+void waitTXIS(){
+	  while (1)
+  {
+		if(I2C2->ISR & I2C_ISR_TXIS){
+			break;
+		}
+  }
+}
+
+/**
+	*@brief wait until RXNE flag is set
+**/
+void waitRXNE(){
+	  while (1)
+  {
+		if(I2C2->ISR & I2C_ISR_RXNE){
+			break;
+		}
+  }
+}
 
 
+
+/**
+	*@brief waits for Transfer to complete.
+**/
+void waitTransfer(){
+	  while (1)
+  {
+		if((I2C2->ISR & (1<<6))){
+			break;
+		}
+  }
+}
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
@@ -131,228 +166,169 @@ int main(void)
 	I2C2->CR2 |=(1<<13); 
 
 	//wait for TXIS
-  while (1)
-  {
-		if((I2C2->ISR & (1<<1))){
+	waitTXIS();
 	
-			break;
-		}
-  }
-	//write CR!
+	//write CR1 Data 
 	I2C2->TXDR = 0x20;
 
-  
-		//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
-		I2C2->CR2 |=(1<<14);
+	//wait until transfer complete
+	waitTransfer();
 	
-	I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16);
-//RD WRN
-I2C2->CR2 &=~(1<<10); 
-//START
-I2C2->CR2 |=(1<<13); 
-
-  while (1)
-  {
-		if((I2C2->ISR & (1<<1))){
+	//close 
+	I2C2->CR2 |=(1<<14);
 	
-			break;
-		}
-  }
-	//write CR!
+	//START
+	I2C2->CR2 |=(1<<13); 
+	
+	//wait TXIS
+	waitTXIS();
+	
+	//write CR1 data
 	I2C2->TXDR = 0xE;
 
-		//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
+	//wait until transfer complete
+	waitTransfer();
 	
 	//stop 
 	I2C2->CR2 |=(1<<14);
+	
+	//set up values to store data
 	char xL;
 	char xH;
 	char yL;
 	char yH;
 	int16_t x;
 	int16_t y;
+	
+	//while loop to refresh data
 	while(1){
 	
-	HAL_Delay(100);
+		//create delay to poll data
+		HAL_Delay(100);
 	
 
-	
-	//get xL
-	//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16);
-I2C2->CR2 &=~(1<<17);	
-//RD WRN
-I2C2->CR2 &=~(1<<10); 
-//START
-I2C2->CR2 |=(1<<13); 
+		//set 1 byte
+		I2C2->CR2 |= (1<<16);
+		I2C2->CR2 &=~(1<<17);	
+		//RD WRN
+		I2C2->CR2 &=~(1<<10); 
+		//START
+		I2C2->CR2 |=(1<<13); 
 
-  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_TXIS)){
+		//wait TXIS
+		waitTXIS();
+		
+		//write A8 to return xL and xH
+		I2C2->TXDR = 0xA8;
 	
-			break;
-		}
-  }
-	//write Out_X_L
-	I2C2->TXDR = 0xA8;
+		//wait until transfer complete
+		waitTransfer();
 	
-	//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
+ 
+		//set 2 bytes
+		I2C2->CR2 |= (1<<17); 
+		I2C2->CR2 &=~(1<<16);
+		//RD WRN
+		I2C2->CR2 |=(1<<10); 
+		//START
+		I2C2->CR2 |=(1<<13);
+		
+		//wait until RXNE
+		waitRXNE();
 	
-	//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<17); 
-I2C2->CR2 &=~(1<<16);
-//RD WRN
-I2C2->CR2 |=(1<<10); 
-//START
-I2C2->CR2 |=(1<<13);
-	//wait until RXNE
-	  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_RXNE)){
-			break;
-		}
-  }
+		//read data
 		xL = I2C2->RXDR;
 
-	
 		//wait until RXNE
-	  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_RXNE)){
-			break;
-		}
-  }
+		waitRXNE();
+		
+		//read data
 		xH = I2C2->RXDR;
+		
 		//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
+		waitTransfer();
+		
+		//stop
+		I2C2->CR2 |=(1<<14);
+	
+	
+		//read y values
+		//set 1 byte
+		I2C2->CR2 |= (1<<16);
+		I2C2->CR2 &=~(1<<17);	
+		//RD WRN
+		I2C2->CR2 &=~(1<<10); 
+		//START
+		I2C2->CR2 |=(1<<13); 
 
-			I2C2->CR2 |=(1<<14);
-	
-	
-	
-	
-	
-	//y values 
-	I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<16);
-I2C2->CR2 &=~(1<<17);	
-//RD WRN
-I2C2->CR2 &=~(1<<10); 
-//START
-I2C2->CR2 |=(1<<13); 
+		//wait txis
+		waitTXIS();
 
-  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_TXIS)){
+		//write AA for yL and yH
+		I2C2->TXDR = 0xAA;
 	
-			break;
-		}
-  }
-	//write Out_X_L
-	I2C2->TXDR = 0xAA;
+		//wait until transfer complete
+	  waitTransfer();
 	
-	//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
-		}
-  }
-	
-	//set slave address
-I2C2->CR2 |= (0x69<<1); 
-//set n bytes
-I2C2->CR2 |= (1<<17); 
-I2C2->CR2 &=~(1<<16);
-//RD WRN
-I2C2->CR2 |=(1<<10); 
-//START
-I2C2->CR2 |=(1<<13);
-	//wait until RXNE
-	  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_RXNE)){
-			break;
-		}
-  }
+ 
+		//set 2 bytes
+		I2C2->CR2 |= (1<<17); 
+		I2C2->CR2 &=~(1<<16);
+		//RD WRN
+		I2C2->CR2 |=(1<<10); 
+		//START
+		I2C2->CR2 |=(1<<13);
+		//wait until RXNE
+		waitRXNE();
+		
+		//collect data
 		yL = I2C2->RXDR;
 
-	
 		//wait until RXNE
-	  while (1)
-  {
-		if((I2C2->ISR & I2C_ISR_RXNE)){
-			break;
-		}
-  }
+		waitRXNE();
+		
+		//read data
 		yH = I2C2->RXDR;
+		
+		
 		//wait until transfer complete
-	  while (1)
-  {
-		if((I2C2->ISR & (1<<6))){
-			break;
+		waitTransfer();
+		
+		//stop
+		I2C2->CR2 |=(1<<14);
+		
+		//append values and get x and y values
+		x = (xH<<8) | xL;
+		y = (yH<<8) | yL;
+		
+		//determine which lights to turn on or off
+		if(x > 500){
+			GPIOC->ODR |=(1<<9);
 		}
-  }
+		else{
+			GPIOC->ODR &=~(1<<9);
+		}
+		
+		if(x < -500){
+			GPIOC->ODR |=(1<<8);
+		}
+		else{
+			GPIOC->ODR &=~(1<<8);
+		}
 
-			I2C2->CR2 |=(1<<14);
-	
-	x = (xH<<8) | xL;
-	y = (yH<<8) | yL;
-if(x > 500){
-	GPIOC->ODR |=(1<<9);
-	}
-else{
-GPIOC->ODR &=~(1<<9);
-}
-if(x < -500){
-	GPIOC->ODR |=(1<<8);
-	}
-else{
-GPIOC->ODR &=~(1<<8);
-}
-
-if(y > 500){
-	GPIOC->ODR |=(1<<6);
-	}
-else{
-GPIOC->ODR &=~(1<<6);
-}
-if(y < -500){
-	GPIOC->ODR |=(1<<7);
-	}
-else{
-GPIOC->ODR &=~(1<<7);
-}
+		if(y > 500){
+			GPIOC->ODR |=(1<<6);
+		}
+		else{
+			GPIOC->ODR &=~(1<<6);
+		}
+		
+		if(y < -500){
+			GPIOC->ODR |=(1<<7);
+		}
+		else{
+			GPIOC->ODR &=~(1<<7);
+		}
 }
 
 }
